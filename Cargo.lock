@@ -406,7 +406,7 @@ dependencies = [
 
 [[package]]
 name = "mzjd"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "serde",
  "serde_json",
@@ -414,7 +414,7 @@ dependencies = [
 
 [[package]]
 name = "mzjd-cli"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "mzjd",
  "serde",
@@ -500,7 +500,7 @@ dependencies = [
 
 [[package]]
 name = "patchman"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
  "mzjd",
  "reqwest",
