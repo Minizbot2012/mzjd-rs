@@ -16,8 +16,8 @@ impl Op for AddOp {
         let point = pv.rfind("/").unwrap();
         let (split, vn) = pv.split_at(point);
         let ptr = input.pointer_mut(&split).unwrap();
-        match ptr.pointer(&format!("/{vn}")) {
-            Some(_) => match ptr.pointer_mut(&format!("/{vn}")).unwrap() {
+        match ptr.pointer(&format!("{vn}")) {
+            Some(_) => match ptr.pointer_mut(&format!("{vn}")).unwrap() {
                 Value::Array(v) => {
                     if !v.contains(&self.value) {
                         v.push(self.value)
@@ -27,7 +27,7 @@ impl Op for AddOp {
             },
             None => match ptr {
                 Value::Object(obj) => {
-                    obj.insert(vn.to_string(), self.value.clone());
+                    obj.insert(vn.trim_start_matches("/").to_string(), self.value.clone());
                 }
                 _ => {}
             },
@@ -52,7 +52,7 @@ impl Op for RemoveOp {
             Some(x) => match x {
                 Value::Array(_) => {
                     let v = ptr
-                        .pointer_mut(&format!("/{vn}"))
+                        .pointer_mut(&format!("{vn}"))
                         .unwrap()
                         .as_array_mut()
                         .unwrap();
