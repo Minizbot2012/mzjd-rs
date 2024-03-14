@@ -43,6 +43,7 @@ fn main() {
         .json()
         .unwrap();
     if base.get("Marker").unwrap().as_str().unwrap() != index.marker {
+        println!("Resetting due to marker change");
         base = json!(
             {
                 "DBVer": 0,
@@ -58,6 +59,7 @@ fn main() {
                 .unwrap()
                 .json()
                 .unwrap();
+            println!("Applying patch for DB V{i}");
             for p in patch {
                 p.apply(&mut base);
             }
@@ -72,6 +74,7 @@ fn main() {
         if filn.ends_with("_SWK.json") {
             let patch: Vec<Operation> =
                 serde_json::from_reader(File::open(fi.path()).unwrap()).unwrap();
+            println!("Applying patch for {filn}");
             for p in patch {
                 p.apply(&mut game)
             }
