@@ -10,8 +10,7 @@ fn main() {
                 serde_json::from_reader(File::open(arg.next().unwrap()).unwrap()).unwrap();
             let right: Value =
                 serde_json::from_reader(File::open(arg.next().unwrap()).unwrap()).unwrap();
-            let mut path = Vec::new();
-            let diff = diff_tree(&left, &right, &mut path);
+            let diff = diff_tree(&left, &right);
             let mut out = File::create(arg.next().unwrap()).unwrap();
             serde_json::to_writer_pretty(&mut out, &diff).unwrap();
         }

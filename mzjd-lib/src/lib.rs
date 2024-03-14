@@ -13,17 +13,9 @@ pub struct AddOp {
 impl Op for AddOp {
     fn apply(self, input: &mut Value) {
         let pv = self.path.clone();
-        let cnt = pv.clone().split("/").count();
-        let vn = pv.split("/").last().unwrap().to_string();
-        let split = format!(
-            "{}",
-            pv.split("/").collect::<Vec<&str>>()[..cnt - 1].join("/")
-        );
-        let ptr = if split != "/" {
-            input.pointer_mut(&split).unwrap()
-        } else {
-            input
-        };
+        let point = pv.rfind("/").unwrap();
+        let (split, vn) = pv.split_at(point);
+        let ptr = input.pointer_mut(&split).unwrap();
         match ptr.pointer(&format!("/{vn}")) {
             Some(_) => match ptr.pointer_mut(&format!("/{vn}")).unwrap() {
                 Value::Array(v) => {
@@ -35,7 +27,7 @@ impl Op for AddOp {
             },
             None => match ptr {
                 Value::Object(obj) => {
-                    obj.insert(vn, self.value.clone());
+                    obj.insert(vn.to_string(), self.value.clone());
                 }
                 _ => {}
             },
@@ -53,17 +45,9 @@ pub struct RemoveOp {
 impl Op for RemoveOp {
     fn apply(self, input: &mut Value) {
         let pv = self.path.clone();
-        let cnt = pv.clone().split("/").count();
-        let vn = pv.split("/").last().unwrap().to_string();
-        let split = format!(
-            "{}",
-            pv.split("/").collect::<Vec<&str>>()[..cnt - 1].join("/")
-        );
-        let ptr = if split != "/" {
-            input.pointer_mut(&split).unwrap()
-        } else {
-            input
-        };
+        let point = pv.rfind("/").unwrap();
+        let (split, vn) = pv.split_at(point);
+        let ptr = input.pointer_mut(&split).unwrap();
         match ptr.pointer(&format!("/{vn}")) {
             Some(x) => match x {
                 Value::Array(_) => {
@@ -83,7 +67,7 @@ impl Op for RemoveOp {
                     }
                 }
                 _ => {
-                    ptr.as_object_mut().unwrap().remove(&vn);
+                    ptr.as_object_mut().unwrap().remove(vn);
                 }
             },
             None => todo!(),
@@ -121,7 +105,11 @@ impl Op for Operation {
     }
 }
 
-pub fn diff_tree(left: &Value, right: &Value, path: &mut Vec<String>) -> Vec<Operation> {
+pub fn diff_tree(left: &Value, right: &Value) -> Vec<Operation> {
+    diff_tree_internal(left, right, &mut Vec::new())
+}
+
+fn diff_tree_internal(left: &Value, right: &Value, path: &mut Vec<String>) -> Vec<Operation> {
     let mut op = Vec::new();
     let mut pointer = path.join("/");
     if path.len() == 0 {
@@ -138,7 +126,7 @@ pub fn diff_tree(left: &Value, right: &Value, path: &mut Vec<String>) -> Vec<Ope
                 for item in ra.iter() {
                     if item.is_array() || item.is_object() {
                         path.push(format!("{idx}"));
-                        diff_tree(left.get(idx).unwrap(), item, path);
+                        op.append(&mut diff_tree_internal(left.get(idx).unwrap(), item, path));
                         path.pop();
                     } else if !la.contains(item) {
                         op.push(Operation::Add(AddOp {
@@ -152,7 +140,7 @@ pub fn diff_tree(left: &Value, right: &Value, path: &mut Vec<String>) -> Vec<Ope
                 for item in la.iter() {
                     if item.is_array() || item.is_object() {
                         path.push(format!("{idx}"));
-                        diff_tree(item, ra.get(idx).unwrap(), path);
+                        op.append(&mut diff_tree_internal(item, ra.get(idx).unwrap(), path));
                         path.pop();
                     } else if !ra.contains(item) {
                         op.push(Operation::Remove(RemoveOp {
@@ -217,7 +205,7 @@ pub fn diff_tree(left: &Value, right: &Value, path: &mut Vec<String>) -> Vec<Ope
                 for (k, v) in l.iter() {
                     if right.as_object().unwrap().contains_key(k) {
                         path.push(k.clone());
-                        op.append(&mut diff_tree(v, right.get(k).unwrap(), path));
+                        op.append(&mut diff_tree_internal(v, right.get(k).unwrap(), path));
                         path.pop();
                     } else {
                         op.push(Operation::Remove(RemoveOp {
@@ -229,7 +217,7 @@ pub fn diff_tree(left: &Value, right: &Value, path: &mut Vec<String>) -> Vec<Ope
                 for (k, v) in right.as_object().unwrap().iter() {
                     if l.contains_key(k) {
                         path.push(k.clone());
-                        op.append(&mut diff_tree(v, right.get(k).unwrap(), path));
+                        op.append(&mut diff_tree_internal(v, right.get(k).unwrap(), path));
                         path.pop();
                     } else {
                         op.push(Operation::Add(AddOp {
