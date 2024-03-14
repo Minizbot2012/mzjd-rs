@@ -52,16 +52,19 @@ fn main() {
             }
         )
     }
-    for i in base.get("DBVer").unwrap().as_u64().unwrap() as usize..index.index.len() {
-        let patch: Vec<Operation> = reqwest::blocking::get(index.index.get(i).unwrap())
-            .unwrap()
-            .json()
-            .unwrap();
-        for p in patch {
-            p.apply(&mut base);
+    if base.get("DoUpdates").unwrap().as_bool().unwrap() {
+        for i in base.get("DBVer").unwrap().as_u64().unwrap() as usize..index.index.len() {
+            let patch: Vec<Operation> = reqwest::blocking::get(index.index.get(i).unwrap())
+                .unwrap()
+                .json()
+                .unwrap();
+            for p in patch {
+                p.apply(&mut base);
+            }
+            serde_json::to_writer_pretty(File::create("database.base.json").unwrap(), &base)
+                .unwrap();
         }
     }
-    serde_json::to_writer_pretty(File::create("database.base.json").unwrap(), &base).unwrap();
     let mut game = base.clone();
     for file in fs::read_dir(game_dir).unwrap() {
         let fi = file.unwrap();
