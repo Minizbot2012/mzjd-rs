@@ -1,7 +1,6 @@
-use std::{env::args, fs::File};
-
 use mzjd::{apply_diff, diff_tree, Operation};
 use serde_json::Value;
+use std::{env::args, fs::File};
 
 fn main() {
     let mut arg = args().skip(1);

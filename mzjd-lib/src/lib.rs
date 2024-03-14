@@ -4,7 +4,7 @@ use serde_json::Value;
 pub trait Op {
     fn apply(self, input: &mut Value);
 }
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AddOp {
     pub path: String,
     pub value: Value,
@@ -31,7 +31,7 @@ impl Op for AddOp {
                         v.push(self.value)
                     }
                 }
-                _ => todo!(),
+                _ => {}
             },
             None => match ptr {
                 Value::Object(obj) => {
@@ -43,7 +43,7 @@ impl Op for AddOp {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RemoveOp {
     pub path: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -64,19 +64,14 @@ impl Op for RemoveOp {
         } else {
             input
         };
-        match ptr.pointer_mut(&format!("/{vn}")) {
+        match ptr.pointer(&format!("/{vn}")) {
             Some(x) => match x {
-                Value::Null => todo!(),
-                Value::Bool(_) => {
-                    x.take();
-                }
-                Value::Number(_) => {
-                    x.take();
-                }
-                Value::String(_) => {
-                    x.take();
-                }
-                Value::Array(v) => {
+                Value::Array(_) => {
+                    let v = ptr
+                        .pointer_mut(&format!("/{vn}"))
+                        .unwrap()
+                        .as_array_mut()
+                        .unwrap();
                     let val = self.value.unwrap();
                     if v.contains(&val) {
                         match v.iter().position(|v| val == *v) {
@@ -87,8 +82,8 @@ impl Op for RemoveOp {
                         }
                     }
                 }
-                Value::Object(_) => {
-                    x.take();
+                _ => {
+                    ptr.as_object_mut().unwrap().remove(&vn);
                 }
             },
             None => todo!(),
@@ -96,7 +91,7 @@ impl Op for RemoveOp {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SetOp {
     pub path: String,
     pub value: Value,
@@ -104,11 +99,11 @@ pub struct SetOp {
 
 impl Op for SetOp {
     fn apply(self, input: &mut Value) {
-        *input.pointer_mut(&self.path).unwrap() = self.value;
+        *input.pointer_mut(&self.path).unwrap() = self.value.clone();
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "op")]
 pub enum Operation {
     Add(AddOp),
@@ -197,7 +192,7 @@ pub fn diff_tree(left: &Value, right: &Value, path: &mut Vec<String>) -> Vec<Ope
                 }));
             }
         }
-        Value::Null => todo!(),
+        Value::Null => {}
         Value::Number(l) => {
             if right.is_number() {
                 if l != *right.as_number().unwrap() {
