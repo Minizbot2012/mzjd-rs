@@ -4,7 +4,7 @@ use serde_json::Value;
 pub trait Op {
     fn apply(self, input: &mut Value);
 }
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct AddOp {
     pub path: String,
     pub value: Value,
@@ -43,7 +43,7 @@ impl Op for AddOp {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct RemoveOp {
     pub path: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -91,7 +91,7 @@ impl Op for RemoveOp {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct SetOp {
     pub path: String,
     pub value: Value,
@@ -103,7 +103,7 @@ impl Op for SetOp {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 #[serde(tag = "op")]
 pub enum Operation {
     Add(AddOp),
