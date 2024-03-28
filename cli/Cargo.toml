@@ -5,5 +5,5 @@ edition = "2021"
 
 [dependencies]
 serde = { version = "1.0.197", features = ["derive"] }
-serde_json = { version = "1.0.114", features = ["preserve_order"] }
+serde_json = { version = "1.0.115", features = ["preserve_order"] }
 mzjd = { path = "../mzjd-lib" }
